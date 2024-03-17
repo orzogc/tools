@@ -29,7 +29,7 @@ if [[ -z "${lang}" ]]; then
 fi
 
 # 选择取词范围
-range=$(slurp)
+range=$(script -qefc "slurp" /dev/null)
 if [[ -z "${range}" ]]; then
     exit 1
 fi
@@ -40,7 +40,7 @@ spectacle --fullscreen --background --nonotify --output $TEMP_SCREENSHOT_IMAGE
 if [[ -f $TEMP_SCREENSHOT_IMAGE ]]; then
     # 拿到截图范围
     read x y w h <<< ${range//[^0-9]/ }
-    # 根据截图范围裁剪截图
+    # 根据截图范围裁剪截图（`crop_png`必须在 $PATH 范围里）
     crop_png -x $x -y $y -width $w -height $h -input $TEMP_SCREENSHOT_IMAGE -output $TEMP_IMAGE
 
     if [[ -f $TEMP_IMAGE ]]; then
