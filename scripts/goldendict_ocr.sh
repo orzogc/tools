@@ -9,9 +9,11 @@ TEMP_TXT="${TEMP_FILE_NAME}.txt"
 while getopts ":l:p:" flag; do
     case "${flag}" in
         l)
+            # -l 指定OCR的语言，具体看`man tesseract`的`LANGUAGES AND SCRIPTS`部分
             lang="${OPTARG}"
             ;;
         p)
+            # -p 指定goldendict popup的group
             group="${OPTARG}"
             ;;
         *)

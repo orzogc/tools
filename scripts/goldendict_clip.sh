@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# 第一个参数是goldendict scan popup的group
+# 第一个参数是goldendict popup的group
 if [[ -z "$1" ]]
 then
     goldendict -s "$(wl-paste -p)"
