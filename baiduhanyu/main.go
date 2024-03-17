@@ -17,16 +17,16 @@ const baiduURL = "https://hanyu.baidu.com/s?wd=%s&ptype=zici"
 
 // 爬取百度汉语的网页
 func crawlBaidu(url string) *goquery.Document {
-	res, err := http.Get(url)
+	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		log.Fatalf("status code error: %s", res.Status)
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		log.Fatalf("status code error: %s", resp.Status)
 	}
 
-	doc, err := goquery.NewDocumentFromReader(res.Body)
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,10 +35,10 @@ func crawlBaidu(url string) *goquery.Document {
 }
 
 // 获取字的拼音
-func getPinyin(docBody *goquery.Selection) string {
+func getPinyin(selection *goquery.Selection) string {
 	// 字的拼音
 	var pinyin string
-	docBody.Find("div#pinyin.pronounce").Each(func(i int, s *goquery.Selection) {
+	selection.Find("div#pinyin.pronounce").Each(func(i int, s *goquery.Selection) {
 		s.Find("b").Each(func(i int, p *goquery.Selection) {
 			pinyin += p.Text() + " "
 		})
@@ -53,9 +53,9 @@ func getPinyin(docBody *goquery.Selection) string {
 }
 
 // 获取字词的基本释义
-func getBaseDef(docBody *goquery.Selection) string {
+func getBaseDef(selection *goquery.Selection) string {
 	// 字词的基本释义
-	baseDefinition := docBody.First().Text()
+	baseDefinition := selection.First().Text()
 
 	if len(baseDefinition) != 0 {
 		// 去掉多余的空格
@@ -68,11 +68,11 @@ func getBaseDef(docBody *goquery.Selection) string {
 }
 
 // 获取字词的详细释义
-func getDetaiDef(docBody *goquery.Selection) string {
+func getDetaiDef(selection *goquery.Selection) string {
 	// 字词的详细释义
 	var detailDefinition string
 	// 多音字不同音的划分
-	docBody.Eq(1).Find("dl").Each(func(i int, s *goquery.Selection) {
+	selection.Eq(1).Find("dl").Each(func(i int, s *goquery.Selection) {
 		s.Children().Each(func(i int, p *goquery.Selection) {
 			tag := goquery.NodeName(p)
 			if tag == "dt" {
@@ -114,29 +114,25 @@ func getDetaiDef(docBody *goquery.Selection) string {
 }
 
 // 获取字词的释义
-func getWords(url string) string {
+func getWord(url string) string {
 	doc := crawlBaidu(url)
-	docBody := doc.Find("div#content-panel")
 
-	pinyin := getPinyin(docBody)
+	selection := doc.Find("div#content-panel")
+	pinyin := getPinyin(selection)
 
-	docBody = docBody.Find("div.tab-content")
-	baseDefinition := getBaseDef(docBody)
-	detailDefinition := getDetaiDef(docBody)
+	selection = selection.Find("div.tab-content")
+	baseDefinition := getBaseDef(selection)
+	detailDefinition := getDetaiDef(selection)
 
 	return pinyin + baseDefinition + detailDefinition
 }
 
 func main() {
-	var words string
 	// 只接受查询一个字词
 	if len(os.Args) > 1 {
-		words = os.Args[1]
-	} else {
-		return
+		word := strings.TrimSpace(os.Args[1])
+		searchURL := fmt.Sprintf(baiduURL, url.QueryEscape(word))
+		result := getWord(searchURL)
+		fmt.Print(result)
 	}
-
-	searchURL := fmt.Sprintf(baiduURL, url.QueryEscape(words))
-	result := getWords(searchURL)
-	fmt.Print(result)
 }
