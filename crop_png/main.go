@@ -14,12 +14,12 @@ type SubImager interface {
 }
 
 func main() {
-	x := flag.Int("x", 0, "裁剪目标左上角或右下角的 x 坐标")
-	y := flag.Int("y", 0, "裁剪目标左上角或右下角的 y 坐标")
-	width := flag.Int("width", 0, "裁剪宽度")
-	height := flag.Int("height", 0, "裁剪高度")
-	input := flag.String("input", "", "要裁剪的 PNG 图片文件")
-	output := flag.String("output", "", "裁剪图片的输出文件")
+	x := flag.Int("x", 0, "裁剪范围顶点的 x 坐标，默认为 0")
+	y := flag.Int("y", 0, "裁剪范围顶点的 y 坐标，默认为 0")
+	width := flag.Int("width", 0, "裁剪宽度（必需），会限制在图片范围内")
+	height := flag.Int("height", 0, "裁剪高度（必需），会限制在图片范围内")
+	input := flag.String("input", "", "要裁剪的 PNG 图片文件（必需）")
+	output := flag.String("output", "", "裁剪图片的输出文件（必需）")
 	helpShort := flag.Bool("h", false, "打印帮助信息")
 	helpLong := flag.Bool("help", false, "打印帮助信息")
 
@@ -50,14 +50,11 @@ func main() {
 		log.Fatalf("decode png image error: %v", err)
 	}
 
-	x0 := min(*x, *x+*width)
-	y0 := min(*y, *y+*height)
-	x1 := max(*x, *x+*width)
-	y1 := max(*y, *y+*height)
 	bounds := originalImage.Bounds()
-	if x0 < bounds.Min.X || y0 < bounds.Min.Y || x1 > bounds.Max.X || y1 > bounds.Max.Y {
-		log.Fatal("cropping is out of range")
-	}
+	x0 := max(min(*x, *x+*width), bounds.Min.X)
+	y0 := max(min(*y, *y+*height), bounds.Min.Y)
+	x1 := min(max(*x, *x+*width), bounds.Max.X)
+	y1 := min(max(*y, *y+*height), bounds.Max.Y)
 	cropRect := image.Rect(x0, y0, x1, y1)
 	croppedImage := originalImage.(SubImager).SubImage(cropRect)
 
